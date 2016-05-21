@@ -61,13 +61,17 @@ var StateView = Backbone.View.extend({
     *
     * @inherits Backbone.View
     *
-    * @param {any} initialState
+    * @param {Object?} opts
     */
-  initialize: function(initialState) {
-    this.state = initialState || {};
+  initialize: function(opts) {
     this.boundMethods = {};
     this.renderTask = null;
     this.renderCallback = [];
+
+    this.state = {};
+    if (opts && opts.state) {
+      this.state = opts.state;
+    }
   },
 
   /**
@@ -124,7 +128,7 @@ var StateView = Backbone.View.extend({
    */
   remove: function() {
     this.discardElement(this.el);
-    Backbone.View.prototype.remove.call(this);
+    this.stopListening();
     return this;
   },
 
@@ -253,7 +257,7 @@ var StateView = Backbone.View.extend({
 
           // update view if it is compatible with the new one
 
-          if (view.update && toRender && view instanceof data.render && view.update($to, data) !== false) {
+          if (view.update && toRender && view instanceof data.render && view.update(data, $to) !== false) {
             renderLevel -= 1;
             return false;
           }
@@ -525,7 +529,7 @@ function renderView(ctx, rootEl) {
 
     if ($el.attr('c-render')) {
       var data = StateView.getElementData(el);
-      $el.data('StateView.SubView#' + ctx.cid, new data.render($el, data));
+      $el.data('StateView.SubView#' + ctx.cid, new data.render({ el: el, $el: $el, state: data }));
       return false;
     }
 

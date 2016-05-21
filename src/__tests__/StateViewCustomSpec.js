@@ -18,12 +18,11 @@ describe('StateView', () => {
   let onButtonClick
 
   const TranscludeView = StateView.extend({
-    initialize($container, initialState) {
-      StateView.prototype.initialize.call(this)
-      this.setElement($container)
-      this.update($container, initialState)
+    initialize() {
+      StateView.prototype.initialize.apply(this, arguments)
+      this.update(this.state, this.$el)
     },
-    update($to, nextState) {
+    update(nextState, $to) {
       this.template = $(nextState.transclude).clone(true)[0]
       this.forceUpdate()
     },

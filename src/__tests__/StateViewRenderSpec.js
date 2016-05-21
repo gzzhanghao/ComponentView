@@ -36,7 +36,7 @@ describe('StateView', () => {
   })
 
   it('can render with state', () => {
-    createView({ template: ({ text }) => `<div>${text}</div>` }, [{ text: 'foo' }])
+    createView({ template: ({ text }) => `<div>${text}</div>` }, [{ state: { text: 'foo' } }])
 
     jest.runAllTimers()
 
