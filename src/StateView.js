@@ -473,11 +473,15 @@ function dispatchEvent(event) {
  * @return {Array} target attribute names without leading `on-`
  */
 function getEvents(el) {
-  return _.chain(el.attributes)
-    .map(function(node) { return node.nodeName })
-    .filter(function(name) { return name.slice(0, 3) === 'on-' })
-    .map(function(name) { return name.slice(3) })
-    .value();
+  var events = [];
+  var attrs = el.attributes;
+  for (var i = attrs.length - 1; i >= 0; i--) {
+    var name = attrs[i].nodeName;
+    if (name.slice(0, 3) === 'on-') {
+      events.push(name.slice(3));
+    }
+  }
+  return events;
 }
 
 /**
