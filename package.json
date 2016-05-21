@@ -1,0 +1,30 @@
+{
+  "name": "state-view",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/StateView.js",
+  "scripts": {
+    "test": "jest",
+    "watch": "jest --watch=all"
+  },
+  "author": "Jason <jason.daurus@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-jest": "^12.0.2",
+    "babel-plugin-transform-async-to-generator": "^6.8.0",
+    "babel-plugin-transform-es2015-destructuring": "^6.8.0",
+    "babel-plugin-transform-es2015-parameters": "^6.8.0",
+    "babel-plugin-transform-strict-mode": "^6.8.0",
+    "backbone": "^1.3.3",
+    "jest-cli": "^12.0.2",
+    "jquery": "^2.2.3",
+    "morphdom": "github:gzzhanghao/morphdom",
+    "underscore": "^1.8.3"
+  },
+  "peerDependencies": {
+    "backbone": "^1.3.3",
+    "jquery": "^2.2.3",
+    "underscore": "^1.8.3",
+    "morphdom": "github:gzzhanghao/morphdom"
+  }
+}
