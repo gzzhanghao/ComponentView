@@ -3,6 +3,9 @@ var _ = require('underscore');
 var Backbone = require('backbone');
 var morphdom = require('morphdom');
 
+var CONTEXT_KEY = 'StateView.Context';
+var SUBVIEW_KEY = 'StateView.SubView#';
+
 var SEP_REGEX     = /-./g;
 var COMMENT_REGEX = /<!--[\w\W]*?-->/g;
 
@@ -95,7 +98,7 @@ var StateView = Backbone.View.extend({
       self.renderTask = null;
       var tmpl = self.template;
       if (_.isFunction(tmpl)) {
-        tmpl = tmpl.call(self, self.state);
+        tmpl = self.template(self.state);
       }
       self.renderElement(self.el, tmpl);
       for (var i = self.renderCallback.length - 1; i >= 0; i--) {
@@ -182,9 +185,9 @@ var StateView = Backbone.View.extend({
 
     var children = tmpl.querySelectorAll('*');
 
-    $(tmpl).data('StateView.Context', this);
+    $(tmpl).data(CONTEXT_KEY, this);
     for (var i = children.length - 1; i >= 0; i--) {
-      $(children[i]).data('StateView.Context', this);
+      $(children[i]).data(CONTEXT_KEY, this);
     }
 
     return tmpl;
@@ -238,7 +241,7 @@ var StateView = Backbone.View.extend({
 
         // bump render level to prevent rendering grandchildren
 
-        var toRender = $to.attr('c-render');
+        var toRender = toEl.getAttribute('c-render');
 
         if (toRender) {
           renderLevel += 1;
@@ -246,7 +249,7 @@ var StateView = Backbone.View.extend({
 
         // update element context
 
-        $from.data('StateView.Context', $to.data('StateView.Context'));
+        $from.data(CONTEXT_KEY, $to.data(CONTEXT_KEY));
 
         // update bound view if exists
 
@@ -291,8 +294,7 @@ var StateView = Backbone.View.extend({
        * Re-bind views
        */
       onElChildrenUpdated: function(el) {
-        var $el = $(el);
-        if (!$el.attr('c-render')) {
+        if (!el.getAttribute('c-render')) {
           return;
         }
         renderLevel -= 1;
@@ -344,7 +346,7 @@ var StateView = Backbone.View.extend({
   getElementData: function(el) {
     var $el = $(el);
 
-    var ctx = $el.data('StateView.Context');
+    var ctx = $el.data(CONTEXT_KEY);
     if (!ctx) {
       return {};
     }
@@ -531,7 +533,7 @@ function renderView(ctx, rootEl) {
   walkTree(rootEl, function(el) {
     var $el = $(el);
 
-    if ($el.attr('c-render')) {
+    if (el.getAttribute('c-render')) {
       var data = StateView.getElementData(el);
       $el.data('StateView.SubView#' + ctx.cid, new data.render({ el: el, $el: $el, state: data }));
       return false;
