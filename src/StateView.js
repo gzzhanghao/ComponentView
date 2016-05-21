@@ -535,7 +535,7 @@ function renderView(ctx, rootEl) {
 
     if (el.getAttribute('c-render')) {
       var data = StateView.getElementData(el);
-      $el.data('StateView.SubView#' + ctx.cid, new data.render({ el: el, $el: $el, state: data }));
+      $el.data('StateView.SubView#' + ctx.cid, new data.render({ el: el, state: data }));
       return false;
     }
 
