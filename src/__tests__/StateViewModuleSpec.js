@@ -1,14 +1,5 @@
 'use strict'
 
-jest
-  .unmock('jquery')
-  .unmock('underscore')
-  .unmock('backbone')
-  .unmock('morphdom')
-  .unmock('./PureView')
-  .unmock('./createView')
-  .unmock('../StateView')
-
 const createView = require('./createView')
 const PureView = require('./PureView')
 

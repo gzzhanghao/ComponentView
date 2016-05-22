@@ -1,12 +1,5 @@
 'use strict'
 
-jest
-  .unmock('jquery')
-  .unmock('underscore')
-  .unmock('backbone')
-  .unmock('morphdom')
-  .unmock('../StateView')
-
 const StateView = require('../StateView')
 
 module.exports = StateView.extend({

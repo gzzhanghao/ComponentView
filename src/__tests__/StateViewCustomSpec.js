@@ -1,14 +1,5 @@
 'use strict'
 
-jest
-  .unmock('jquery')
-  .unmock('underscore')
-  .unmock('backbone')
-  .unmock('morphdom')
-  .unmock('./createView')
-  .unmock('./PureView')
-  .unmock('../StateView')
-
 const $ = require('jquery')
 const createView = require('./createView')
 const PureView = require('./PureView')
@@ -23,7 +14,7 @@ describe('StateView', () => {
       this.update(this.state, this.$el)
     },
     update(nextState, $to) {
-      this.template = $(nextState.transclude).clone(true)[0]
+      this.template = $(nextState.template).clone(true)[0]
       this.forceUpdate()
     },
     remove() {
@@ -81,7 +72,7 @@ describe('StateView', () => {
     createView({
       subView: PureView.extend({
         TranscludeView,
-        template: '<div><span c-render="TranscludeView" c-transclude="children.0"></span></div>'
+        template: '<div><span c-render="TranscludeView" c-template="children.0"></span></div>'
       }),
       template: '<div><div c-render="subView"><span>:P</span></div></div>'
     })

@@ -253,7 +253,7 @@ var StateView = Backbone.View.extend({
 
         // update bound view if exists
 
-        var view = $from.data('StateView.SubView#' + self.cid);
+        var view = $from.data(SUBVIEW_KEY + self.cid);
 
         if (view) {
           var data = StateView.getElementData(toEl);
@@ -319,7 +319,7 @@ var StateView = Backbone.View.extend({
     walkTree(el, function(el) {
       var $el = $(el);
 
-      var view = $el.data('StateView.SubView#' + self.cid);
+      var view = $el.data(SUBVIEW_KEY + self.cid);
       if (view) {
         view.remove && view.remove();
         return false;
