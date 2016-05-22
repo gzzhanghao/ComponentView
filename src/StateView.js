@@ -96,11 +96,7 @@ var StateView = Backbone.View.extend({
 
     self.renderTask = requestAnimationFrame(function() {
       self.renderTask = null;
-      var tmpl = self.template;
-      if (_.isFunction(tmpl)) {
-        tmpl = self.template(self.state);
-      }
-      self.renderElement(self.el, tmpl);
+      self.renderElement(self.el, _.result(self, 'template'));
       for (var i = self.renderCallback.length - 1; i >= 0; i--) {
         self.renderCallback[i]();
       }

@@ -28,7 +28,11 @@ describe('StateView', () => {
   })
 
   it('can render with state', () => {
-    createView({ template: ({ text }) => `<div>${text}</div>` }, [{ state: { text: 'foo' } }])
+    createView({
+      template() {
+        return `<div>${this.state.text}</div>`
+      }
+    }, [{ state: { text: 'foo' } }])
 
     jest.runAllTimers()
 
@@ -36,7 +40,11 @@ describe('StateView', () => {
   })
 
   it('can update render with setState', () => {
-    const view = createView({ template: ({ text }) => `<div>${text}</div>` }, [{ text: 'foo' }])
+    const view = createView({
+      template() {
+        return `<div>${this.state.text}</div>`
+      }
+    }, [{ text: 'foo' }])
 
     jest.runAllTimers()
     view.setState({ text: 'bar' })
@@ -46,7 +54,11 @@ describe('StateView', () => {
   })
 
   it('can update render with forceUpdate', () => {
-    const view = createView({ template: ({ text }) => `<div>${text}</div>` }, [{ text: 'foo' }])
+    const view = createView({
+      template() {
+        return `<div>${this.state.text}</div>`
+      }
+    }, [{ text: 'foo' }])
 
     jest.runAllTimers()
     view.state.text = 'bar'
@@ -58,7 +70,9 @@ describe('StateView', () => {
 
   it('can update elements', () => {
     const view = createView({
-      template: ({ state }) => `<div>${state ? '<h1>:D</h1>' : '<span>:(</span>'}</div>`
+      template() {
+        return `<div>${this.state.state ? '<h1>:D</h1>' : '<span>:(</span>'}</div>`
+      }
     })
 
     jest.runAllTimers()

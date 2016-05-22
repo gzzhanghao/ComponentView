@@ -23,7 +23,11 @@ describe('StateView', () => {
 
   it('can pass parameters to sub-views', () => {
     createView({
-      subView: PureView.extend({ template: ({ config }) => `<div>${config.text}</div>` }),
+      subView: PureView.extend({
+        template() {
+          return `<div>${this.state.config.text}</div>`
+        }
+      }),
       config: { text: ':P' },
       template: `<div><div c-render="subView" c-config="config"></div></div>`
     })
@@ -35,8 +39,14 @@ describe('StateView', () => {
 
   it('can update sub-views', () => {
     const view = createView({
-      subView: PureView.extend({ template: ({ text }) => `<div>${text}</div>` }),
-      template: ({ text }) => `<div><div c-render="subView" text="${text}"></div></div>`
+      subView: PureView.extend({
+        template() {
+          return `<div>${this.state.text}</div>`
+        }
+      }),
+      template() {
+        return `<div><div c-render="subView" text="${this.state.text}"></div></div>`
+      }
     }, [{ text: 'foo' }])
 
     jest.runAllTimers()
@@ -49,7 +59,9 @@ describe('StateView', () => {
   it('can dynamically create sub-views', () => {
     const view = createView({
       subView: PureView.extend({ template: `<div>:P</div>` }),
-      template: ({ state }) => `<div><div ${state ? 'c-render="subView"' : ''}></div></div>`
+      template() {
+        return `<div><div ${this.state.state ? 'c-render="subView"' : ''}></div></div>`
+      }
     })
 
     jest.runAllTimers()
@@ -62,7 +74,9 @@ describe('StateView', () => {
   it('can discard sub-views', () => {
     const view = createView({
       subView: PureView.extend({ template: `<div>:P</div>` }),
-      template: ({ state }) => `<div><div ${state ? 'c-render="subView"' : ''}></div></div>`
+      template() {
+        return `<div><div ${this.state.state ? 'c-render="subView"' : ''}></div></div>`
+      }
     }, [{ state: true }])
 
     jest.runAllTimers()
@@ -91,9 +105,13 @@ describe('StateView', () => {
       subView: PureView.extend({
         grandChild: PureView.extend({ template: '<div>:P</div>' }),
         anotherGrandChild: PureView.extend({ template: '<div>:(</div>' }),
-        template: ({ state }) => `<div><div c-render="${state ? 'grandChild' : 'anotherGrandChild'}"></div></div>`
+        template() {
+          return `<div><div c-render="${this.state.state ? 'grandChild' : 'anotherGrandChild'}"></div></div>`
+        }
       }),
-      template: ({ state }) => `<div><div c-render="subView" ${state ? 'state' : ''}></div></div>`
+      template() {
+        return `<div><div c-render="subView" ${this.state.state ? 'state' : ''}></div></div>`
+      }
     })
 
     jest.runAllTimers()
@@ -122,9 +140,13 @@ describe('StateView', () => {
       subView: PureView.extend({
         grandChild: PureView.extend({ template: '<div>:P</div>' }),
         anotherGrandChild: PureView.extend({ template: '<div>:(</div>' }),
-        template: ({ state }) => `<div c-render="${state ? 'grandChild' : 'anotherGrandChild'}"></div>`
+        template() {
+          return `<div c-render="${this.state.state ? 'grandChild' : 'anotherGrandChild'}"></div>`
+        }
       }),
-      template: ({ state }) => `<div c-render="subView" ${state ? 'state' : ''}></div>`
+      template() {
+        return `<div c-render="subView" ${this.state.state ? 'state' : ''}></div>`
+      }
     })
 
     jest.runAllTimers()

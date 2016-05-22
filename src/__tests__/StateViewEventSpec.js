@@ -31,11 +31,13 @@ describe('StateView', () => {
   it('can discard event handler', () => {
     const view = createView({
       onButtonClick,
-      template: ({ state }) => `
-        <div>
-          <button ${state ? 'on-click="onButtonClick"' : ''}>click me</button>
-        </div>
-      `
+      template() {
+        return `
+          <div>
+            <button ${this.state.state ? 'on-click="onButtonClick"' : ''}>click me</button>
+          </div>
+        `
+      }
     }, [{ state: true }])
 
     jest.runAllTimers()
@@ -51,11 +53,13 @@ describe('StateView', () => {
     const view = createView({
       onButtonClick,
       yetAnotherHandler,
-      template: ({ state }) => `
-        <div>
-          <button on-click="${state ? 'onButtonClick' : 'yetAnotherHandler'}">click me</button>
-        </div>
-      `
+      template() {
+        return `
+          <div>
+            <button on-click="${this.state.state ? 'onButtonClick' : 'yetAnotherHandler'}">click me</button>
+          </div>
+        `
+      }
     }, [{ state: true }])
 
     jest.runAllTimers()
