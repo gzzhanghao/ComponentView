@@ -1,10 +1,11 @@
-var $ = require('jquery');
+define(function(require, exports, module) {
+
 var _ = require('underscore');
 var Backbone = require('backbone');
-var morphdom = require('morphdom');
+var morphdom = require('3rd/morphdom');
 
-var CONTEXT_KEY = 'StateView.Context';
-var SUBVIEW_KEY = 'StateView.SubView#';
+var CONTEXT_KEY = 'ComponentView.Context';
+var SUBVIEW_KEY = 'ComponentView.SubView#';
 
 var SEP_REGEX     = /-./g;
 var COMMENT_REGEX = /<!--[\w\W]*?-->/g;
@@ -49,18 +50,18 @@ var buildTemplate = (function() {
 })();
 
 /**
- * StateView class
+ * ComponentView class
  */
-var StateView = Backbone.View.extend({
+var ComponentView = Backbone.View.extend({
 
   /**
    * View methods
    */
 
    /**
-    * Instanciate StateView
+    * Instanciate ComponentView
     *
-    * @constructor StateView
+    * @constructor ComponentView
     *
     * @inherits Backbone.View
     *
@@ -71,10 +72,15 @@ var StateView = Backbone.View.extend({
     this.renderTask = null;
     this.renderCallback = [];
 
-    this.state = {};
-    if (opts && opts.state) {
-      this.state = opts.state;
+    this.props = {};
+
+    this.state = _.result(this, 'getInitialState') || {};
+
+    if (opts && opts.props) {
+      this.props = opts.props;
     }
+
+    this.componentWillMount();
   },
 
   /**
@@ -82,10 +88,14 @@ var StateView = Backbone.View.extend({
    *
    * @param {Function} callback
    *
-   * @return {StateView} self
+   * @return {ComponentView} self
    */
   render: function(callback) {
     var self = this;
+
+    if (self.componentWillUpdate() === false) {
+      return self;
+    }
 
     if (self.renderTask) {
       cancelAnimationFrame(self.renderTask);
@@ -101,6 +111,7 @@ var StateView = Backbone.View.extend({
         self.renderCallback[i]();
       }
       self.renderCallback = [];
+      self.componentDidUpdate();
     });
 
     return self;
@@ -111,7 +122,7 @@ var StateView = Backbone.View.extend({
    *
    * @param {HTMLElement|jQuery} parent
    *
-   * @return {StateView} self
+   * @return {ComponentView} self
    */
   appendTo: function(parent) {
     this.$el.appendTo(parent);
@@ -119,11 +130,28 @@ var StateView = Backbone.View.extend({
   },
 
   /**
-   * Remove the StateView
+   * Default update method
+   *
+   * @param {Object} nextProps
+   * @param {jQuery} $to
+   *
+   * @return {ComponentView} self
+   */
+  update: function(nextProps, $to) {
+    if (this.componentShouldUpdate(nextProps, $to) === false) {
+      return this;
+    }
+    this.props = nextProps;
+    this.render();
+    return this;
+  },
+
+  /**
+   * Remove the ComponentView
    *
    * It will remove all sub-views bound on the element
    *
-   * @return {StateView} self
+   * @return {ComponentView} self
    */
   remove: function() {
     this.discardElement(this.el);
@@ -143,7 +171,7 @@ var StateView = Backbone.View.extend({
    * @param {Object}   nextState
    * @param {Function} callback
    *
-   * @return {StateView} self
+   * @return {ComponentView} self
    */
   setState: function(nextState, callback) {
     this.state = _.extend({}, this.state, nextState);
@@ -153,11 +181,11 @@ var StateView = Backbone.View.extend({
   /**
    * Trigger a render process
    *
-   * @alias StateView.prototype.render
+   * @alias ComponentView.prototype.render
    *
    * @param {Function} callback
    *
-   * @return {StateView} self
+   * @return {ComponentView} self
    */
   forceUpdate: function(callback) {
     return this.render(callback);
@@ -168,7 +196,7 @@ var StateView = Backbone.View.extend({
    */
 
   /**
-   * Bind the template with the StateView instance
+   * Bind the template with the ComponentView instance
    *
    * @param {string|HTMLElement} tmpl
    *
@@ -196,7 +224,7 @@ var StateView = Backbone.View.extend({
    * @param {string|HTMLElement} tmpl
    * @param {boolean}            childrenOnly
    *
-   * @return {StateView} self
+   * @return {ComponentView} self
    */
   renderElement: function(el, tmpl, childrenOnly) {
     var self = this;
@@ -252,7 +280,7 @@ var StateView = Backbone.View.extend({
         var view = $from.data(SUBVIEW_KEY + self.cid);
 
         if (view) {
-          var data = StateView.getElementData(toEl);
+          var data = ComponentView.getElementData(toEl);
 
           // update view if it is compatible with the new one
 
@@ -307,7 +335,7 @@ var StateView = Backbone.View.extend({
    *
    * @param {HTMLElement} el
    *
-   * @return {StateView} self
+   * @return {ComponentView} self
    */
   discardElement: function(el) {
     var self = this;
@@ -327,6 +355,16 @@ var StateView = Backbone.View.extend({
       }
     });
   },
+
+  /**
+   * Lifecycle methods
+   */
+
+  componentWillMount: _.noop,
+
+  componentWillUpdate: _.noop,
+
+  componentDidUpdate: _.noop,
 
 }, {
 
@@ -455,7 +493,7 @@ function stripComments(html) {
  * @param {Event} event
  */
 function dispatchEvent(event) {
-  var data = StateView.getElementData(event.currentTarget);
+  var data = ComponentView.getElementData(event.currentTarget);
   if (data) {
     return data['on' + capitalize(camelize(event.type))](event, data);
   }
@@ -501,6 +539,9 @@ function walkTree(rootEl, callback) {
     }
     for (var j = i; j >= 0; j--) {
       var nextSibling = children[j].nextSibling;
+      while (nextSibling && !_.isElement(nextSibling)) {
+        nextSibling = nextSibling.nextSibling;
+      }
       if (!nextSibling) {
         continue;
       }
@@ -522,7 +563,7 @@ function walkTree(rootEl, callback) {
  *
  * @private
  *
- * @param {StateView}   ctx
+ * @param {ComponentView}   ctx
  * @param {HTMLElement} rootEl
  */
 function renderView(ctx, rootEl) {
@@ -530,8 +571,8 @@ function renderView(ctx, rootEl) {
     var $el = $(el);
 
     if (el.getAttribute('c-render')) {
-      var data = StateView.getElementData(el);
-      $el.data('StateView.SubView#' + ctx.cid, new data.render({ el: el, state: data }));
+      var data = ComponentView.getElementData(el);
+      $el.data(SUBVIEW_KEY + ctx.cid, new data.render({ el: el, props: data }).render());
       return false;
     }
 
@@ -543,4 +584,6 @@ function renderView(ctx, rootEl) {
   });
 }
 
-module.exports = StateView;
+module.exports = ComponentView;
+
+});
