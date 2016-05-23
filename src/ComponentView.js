@@ -1,8 +1,7 @@
-define(function(require, exports, module) {
-
+var $ = require('jquery');
 var _ = require('underscore');
 var Backbone = require('backbone');
-var morphdom = require('3rd/morphdom');
+var morphdom = require('morphdom');
 
 var CONTEXT_KEY = 'ComponentView.Context';
 var SUBVIEW_KEY = 'ComponentView.SubView#';
@@ -71,16 +70,14 @@ var ComponentView = Backbone.View.extend({
     this.boundMethods = {};
     this.renderTask = null;
     this.renderCallback = [];
+    this.isFirstRender = true;
+
+    this.state = _.result(this, 'getInitialState', {});
 
     this.props = {};
-
-    this.state = _.result(this, 'getInitialState') || {};
-
     if (opts && opts.props) {
       this.props = opts.props;
     }
-
-    this.componentWillMount();
   },
 
   /**
@@ -93,8 +90,10 @@ var ComponentView = Backbone.View.extend({
   render: function(callback) {
     var self = this;
 
-    if (self.componentWillUpdate() === false) {
-      return self;
+    if (self.isFirstRender) {
+      self.componentWillMount();
+    } else {
+      self.componentWillUpdate();
     }
 
     if (self.renderTask) {
@@ -105,13 +104,23 @@ var ComponentView = Backbone.View.extend({
     }
 
     self.renderTask = requestAnimationFrame(function() {
+      var isFirstRender = self.isFirstRender;
+
       self.renderTask = null;
+      self.isFirstRender = false;
+
       self.renderElement(self.el, _.result(self, 'template'));
+
       for (var i = self.renderCallback.length - 1; i >= 0; i--) {
         self.renderCallback[i]();
       }
       self.renderCallback = [];
-      self.componentDidUpdate();
+
+      if (isFirstRender) {
+        self.componentDidMount();
+      } else {
+        self.componentDidUpdate();
+      }
     });
 
     return self;
@@ -133,16 +142,15 @@ var ComponentView = Backbone.View.extend({
    * Default update method
    *
    * @param {Object} nextProps
-   * @param {jQuery} $to
    *
    * @return {ComponentView} self
    */
-  update: function(nextProps, $to) {
-    if (this.componentShouldUpdate(nextProps, $to) === false) {
-      return this;
+  update: function(nextProps) {
+    this.componentWillReceiveProps(nextProps);
+    if (this.shouldComponentUpdate(nextProps, this.state) !== false) {
+      this.props = nextProps;
+      this.render();
     }
-    this.props = nextProps;
-    this.render();
     return this;
   },
 
@@ -154,6 +162,7 @@ var ComponentView = Backbone.View.extend({
    * @return {ComponentView} self
    */
   remove: function() {
+    this.componentWillUnmount();
     this.discardElement(this.el);
     this.stopListening();
     return this;
@@ -174,7 +183,11 @@ var ComponentView = Backbone.View.extend({
    * @return {ComponentView} self
    */
   setState: function(nextState, callback) {
-    this.state = _.extend({}, this.state, nextState);
+    var nextState = _.extend({}, this.state, nextState);
+    if (this.shouldComponentUpdate(this.props, nextState) === false) {
+      return this;
+    }
+    this.state = nextState;
     return this.render(callback);
   },
 
@@ -280,13 +293,16 @@ var ComponentView = Backbone.View.extend({
         var view = $from.data(SUBVIEW_KEY + self.cid);
 
         if (view) {
-          var data = ComponentView.getElementData(toEl);
+          var props = ComponentView.getElementData(toEl);
 
           // update view if it is compatible with the new one
 
-          if (view.update && toRender && view instanceof data.render && view.update(data, $to) !== false) {
-            renderLevel -= 1;
-            return false;
+          if (view.update && toRender && view instanceof props.render) {
+            props.children = $to.children();
+            if (view.update(props) !== false) {
+              renderLevel -= 1;
+              return false;
+            }
           }
 
           // discard view otherwise
@@ -362,9 +378,17 @@ var ComponentView = Backbone.View.extend({
 
   componentWillMount: _.noop,
 
+  componentDidMount: _.noop,
+
+  componentWillReceiveProps: _.noop,
+
+  shouldComponentUpdate: _.noop,
+
   componentWillUpdate: _.noop,
 
   componentDidUpdate: _.noop,
+
+  componentWillUnmount: _.noop,
 
 }, {
 
@@ -571,8 +595,9 @@ function renderView(ctx, rootEl) {
     var $el = $(el);
 
     if (el.getAttribute('c-render')) {
-      var data = ComponentView.getElementData(el);
-      $el.data(SUBVIEW_KEY + ctx.cid, new data.render({ el: el, props: data }).render());
+      var props = ComponentView.getElementData(el);
+      props.children = $el.children().remove();
+      $el.data(SUBVIEW_KEY + ctx.cid, new props.render({ el: el, props: props }).render());
       return false;
     }
 
@@ -585,5 +610,3 @@ function renderView(ctx, rootEl) {
 }
 
 module.exports = ComponentView;
-
-});
